@@ -15,8 +15,6 @@ namespace ariel
         int lcm_demon(const Fraction& frac)const;
         int getNumerator() const;
         int getDenominator() const;
-        static float float_only_3_after_point(float flo);
-        static Fraction float_to_frac(float flo);
         //operators
         Fraction operator+(const Fraction& frac) const;
         Fraction operator+(float flo) const;
@@ -45,15 +43,15 @@ namespace ariel
         friend ostream& operator<<(ostream& stream, const Fraction& frac);
         friend istream& operator>>(istream& stream, const Fraction& frac);
         //float options
-        friend Fraction& operator+(float flo, Fraction& frac);
-        friend Fraction& operator-(float flo, Fraction& frac);
-        friend Fraction& operator/(float flo, Fraction& frac);
-        friend Fraction& operator*(float flo, Fraction& frac);
-        friend bool operator==(float flo, Fraction& frac);
-        friend bool operator>(float flo, Fraction& frac);
-        friend bool operator<(float flo, Fraction& frac);
-        friend bool operator>=(float flo, Fraction& frac);
-        friend bool operator<=(float flo, Fraction& frac);
+        friend Fraction operator+(float flo, const Fraction& frac);
+        friend Fraction operator-(float flo, const Fraction& frac);
+        friend Fraction operator/(float flo, const Fraction& frac);
+        friend Fraction operator*(float flo, const Fraction& frac);
+        friend bool operator==(float flo, const Fraction& frac);
+        friend bool operator>(float flo, const Fraction& frac);
+        friend bool operator<(float flo, const Fraction& frac);
+        friend bool operator>=(float flo, const Fraction& frac);
+        friend bool operator<=(float flo, const Fraction& frac);
 
     private:
         int numerator_;

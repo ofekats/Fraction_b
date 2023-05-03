@@ -34,4 +34,14 @@ int main() {
     else cout << " a is smaller than 1.1" << endl;
 
 
+    cout << "===========================" << endl;
+
+    Fraction a(1, 2), b(3, 4);
+    ostringstream os;
+    os << a;
+    // Test operator<<
+    // CHECK_NOTHROW(os << a); // Not thrwoing error
+    // CHECK(os.str() == "1/2"); // Prints well
+    cout << 
+
 }
