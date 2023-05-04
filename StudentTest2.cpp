@@ -712,7 +712,8 @@ TEST_SUITE("Input and output operators tests") {
 TEST_CASE("Fraction with largest possible numerator and/or denominator and overflow handling") {
     int max_int = std::numeric_limits<int>::max();
     int min_int = std::numeric_limits<int>::min();
-
+    cout << "max:" << max_int << endl;
+    cout << "min:" << min_int << endl;
     // Test largest possible numerator
     CHECK_NOTHROW(Fraction f1(max_int, 1));
     Fraction f1(max_int, 1);

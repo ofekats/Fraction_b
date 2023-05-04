@@ -39,13 +39,12 @@ Fraction &Fraction::reduce_fraction()
     int gcd_frac = __gcd(this->numerator_, denominator_);
     this->numerator_ /= gcd_frac;
     this->denominator_ /= gcd_frac;
+    if (this->denominator_ < 0)
+    {
+        this->numerator_ *= -1;
+        this->denominator_ *= -1;
+    }
     return *this;
-}
-
-// LCM = (a * b) / GCD(a, b)
-int Fraction::lcm_demon(const Fraction &frac) const
-{
-    return (this->denominator_ * frac.getDenominator()) / __gcd(this->denominator_, frac.getDenominator());
 }
 
 // get
@@ -58,17 +57,30 @@ int Fraction::getDenominator() const
     return this->denominator_;
 }
 
+// set
+void Fraction::setNumerator(int num)
+{
+    this->numerator_ = num;
+}
+void Fraction::setDenominator(int num)
+{
+    this->denominator_ = num;
+}
+
 // operators
 Fraction Fraction::operator+(const Fraction &frac) const
 {
-    int lcm = this->lcm_demon(frac);
-    int a = this->numerator_ * (lcm/frac.getDenominator());
-    int b = frac.getNumerator() * (lcm/this->denominator_);
-    if (a + b > INT_MAX)
+    long long int a1 = this->numerator_;
+    long long int b2 = frac.getDenominator();
+    long long int a =  a1* b2;
+    long long int a2 = frac.getNumerator();
+    long long int b1 = this->denominator_;
+    long long int b =  a2* b1;
+    if (((a + b) < INT_MIN) || ((a + b) > INT_MAX))
     {
-        throw invalid_argument("too big for int"); // throw an exception
+        throw overflow_error("out the range of int"); // throw an exception
     }
-    Fraction new_frac(a + b, lcm);
+    Fraction new_frac(a + b, this->denominator_ * frac.getDenominator());
     return new_frac.reduce_fraction();
 }
 
@@ -80,14 +92,17 @@ Fraction Fraction::operator+(float flo) const
 
 Fraction Fraction::operator-(const Fraction &frac) const
 {
-    int lcm = this->lcm_demon(frac);
-    int a = this->numerator_ * (lcm / this->denominator_);
-    int b = frac.getNumerator() * (lcm / frac.getDenominator());
-    if (a - b < INT_MIN)
+    long long int a1 = this->numerator_;
+    long long int b2 = frac.getDenominator();
+    long long int a =  a1* b2;
+    long long int a2 = frac.getNumerator();
+    long long int b1 = this->denominator_;
+    long long int b =  a2* b1;
+    if (((a - b) < INT_MIN) || ((a - b) > INT_MAX))
     {
-        throw invalid_argument("too little for int"); // throw an exception
+        throw overflow_error("out the range of int"); // throw an exception
     }
-    Fraction new_frac(a - b, lcm);
+    Fraction new_frac(a - b, this->denominator_ * frac.getDenominator());
     return new_frac.reduce_fraction();
 }
 
@@ -99,21 +114,17 @@ Fraction Fraction::operator-(float flo) const
 
 Fraction Fraction::operator*(const Fraction &frac) const
 {
-    if ((this->numerator_ * frac.getNumerator()) > INT_MAX)
+    long long int a = this->numerator_;
+    long long int b =frac.getNumerator();
+    if ((a*b) > INT_MAX || ((a*b) < INT_MIN))
     {
-        throw invalid_argument("too big for int"); // throw an exception
+        throw overflow_error("out the range of int"); // throw an exception
     }
-    if ((this->numerator_ * frac.getNumerator()) < INT_MIN)
+    a = this->denominator_;
+    b =frac.getDenominator();
+    if ((a*b) > INT_MAX || ((a*b) < INT_MIN))
     {
-        throw invalid_argument("too little for int"); // throw an exception
-    }
-    if ((this->denominator_ * frac.getDenominator()) > INT_MAX)
-    {
-        throw invalid_argument("too big for int"); // throw an exception
-    }
-    if ((this->denominator_ * frac.getDenominator()) < INT_MIN)
-    {
-        throw invalid_argument("too little for int"); // throw an exception
+        throw overflow_error("out the range of int"); // throw an exception
     }
     return Fraction((this->numerator_ * frac.getNumerator()), (this->denominator_ * frac.getDenominator()));
 }
@@ -129,7 +140,7 @@ Fraction Fraction::operator/(const Fraction &frac) const
     // oposite
     if (frac.getNumerator() == 0)
     {
-        throw invalid_argument("can't devide by 0"); // throw an exception
+        throw runtime_error("can't devide by 0"); // throw an exception
     }
     Fraction new_frac(frac.getDenominator(), frac.getNumerator());
     return this->operator*(new_frac);
@@ -137,6 +148,10 @@ Fraction Fraction::operator/(const Fraction &frac) const
 
 Fraction Fraction::operator/(float flo) const
 {
+    if (flo == 0.0)
+    {
+        throw runtime_error("denominator can't be 0"); // throw an exception
+    }
     Fraction flo_frac(flo);
     Fraction new_frac(flo_frac.getDenominator(), flo_frac.getNumerator());
     return this->operator*(new_frac);
@@ -146,14 +161,19 @@ bool Fraction::operator==(const Fraction &frac) const
 {
     int ispos1 = 0;
     int ispos2 = 0;
+    int flag = 0;
     // is the fractions positive
-    if (this->numerator_ >= 0 && this->denominator_ >= 0)
+    if ((this->numerator_ >= 0 && this->denominator_ >= 0) || (this->numerator_ <= 0 && this->denominator_ <= 0))
     {
         ispos1 = 1;
     }
-    if (frac.getNumerator() && frac.getDenominator())
+    if ((frac.getNumerator() >= 0 && frac.getDenominator() >= 0) || (frac.getNumerator() <= 0 && frac.getDenominator() <= 0))
     {
         ispos2 = 1;
+    }
+    if (this->numerator_ == 0 & frac.getNumerator() == 0)
+    {
+        return true;
     }
     // only one of the fractions is negative
     if (ispos1 != ispos2)
@@ -161,33 +181,30 @@ bool Fraction::operator==(const Fraction &frac) const
         return false;
     }
     // both fractions are negative
-    if(ispos1 == 0)
+    if (ispos1 == 0)
     {
         if ((this->numerator_ <= 0 && frac.getNumerator() >= 0) || (this->numerator_ >= 0 && frac.getNumerator() <= 0))
         {
-            if ((this->numerator_ * (-1))!= frac.getNumerator())
+            flag =1;
+            if ((this->numerator_ * (-1)) != frac.getNumerator())
             {
                 return false;
             }
-            if ((this->denominator_*(-1)) != frac.getDenominator())
+            if ((this->denominator_ * (-1)) != frac.getDenominator())
             {
                 return false;
             }
         }
     }
     // both fractions are positive or "-" in the same level
-    else
+    if (this->numerator_ != frac.getNumerator() && flag == 0)
     {
-        if (this->numerator_ != frac.getNumerator())
-        {
-            return false;
-        }
-        if (this->denominator_ != frac.getDenominator())
-        {
-            return false;
-        }
+        return false;
     }
-
+    if (this->denominator_ != frac.getDenominator() && flag == 0)
+    {
+        return false;
+    }
     return true;
 }
 
@@ -284,12 +301,28 @@ Fraction Fraction::operator--(int) // postfix
 // friends
 ostream &ariel::operator<<(ostream &stream, Fraction const &frac)
 {
-    return stream << " " << frac.getNumerator() << "/" << frac.getDenominator() << " ";
+    if(frac.getDenominator() < 0)
+    {
+        return stream << (-1) * frac.getNumerator() << "/" << (-1) * frac.getDenominator();
+    }
+    else
+    {
+        return stream << frac.getNumerator() << "/" << frac.getDenominator();
+    }
+
 }
-istream &ariel::operator>>(istream &stream, Fraction const &frac)
+istream &ariel::operator>>(istream &stream, Fraction &frac)
 {
     char c;
-    stream >> frac.getNumerator() >> c >> frac.getDenominator();
+    int numerator = 0;
+    int denominator = 0;
+    stream >> numerator >> denominator;
+    if (denominator == 0)
+    {
+        throw runtime_error("not 2 numbers"); // throw an exception
+    }
+    frac.setNumerator(numerator);
+    frac.setDenominator(denominator);
     return stream;
 }
 // float options
