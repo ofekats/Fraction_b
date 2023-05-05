@@ -22,7 +22,7 @@ Fraction::Fraction(int numa, int numb)
 
 Fraction::Fraction(float flo)
 {
-    // reduce
+    // reduce to only 3 after point
     int int_val = flo * 1000;
     float float_val = (float)int_val / 1000;
     *this = Fraction(float_val * 1000, 1000);
@@ -35,10 +35,11 @@ Fraction::Fraction(double dou)
 
 Fraction &Fraction::reduce_fraction()
 {
-    // gcd
-    int gcd_frac = __gcd(this->numerator_, denominator_);
+    // gcd- greatest common divisor
+    int gcd_frac = __gcd(this->numerator_, this->denominator_);
     this->numerator_ /= gcd_frac;
     this->denominator_ /= gcd_frac;
+    //denominator_ will be positive
     if (this->denominator_ < 0)
     {
         this->numerator_ *= -1;
@@ -68,20 +69,22 @@ void Fraction::setDenominator(int num)
 }
 
 // operators
+// this func can throw an exception
 Fraction Fraction::operator+(const Fraction &frac) const
 {
-    long long int a1 = this->numerator_;
-    long long int b2 = frac.getDenominator();
-    long long int a =  a1* b2;
-    long long int a2 = frac.getNumerator();
-    long long int b1 = this->denominator_;
-    long long int b =  a2* b1;
+    // a1/a2 + b1/b2 == (a1*b2)+(b1*a2)/(a2*b2)
+    long int a1 = this->numerator_;
+    long int b2 = frac.getDenominator();
+    long int a =  a1* b2;
+    long int a2 = frac.getNumerator();
+    long int b1 = this->denominator_;
+    long int b =  a2* b1;
     if (((a + b) < INT_MIN) || ((a + b) > INT_MAX))
     {
         throw overflow_error("out the range of int"); // throw an exception
     }
     Fraction new_frac(a + b, this->denominator_ * frac.getDenominator());
-    return new_frac.reduce_fraction();
+    return new_frac;
 }
 
 Fraction Fraction::operator+(float flo) const
@@ -90,20 +93,22 @@ Fraction Fraction::operator+(float flo) const
     return this->operator+(new_frac);
 }
 
+// this func can throw an exception
 Fraction Fraction::operator-(const Fraction &frac) const
 {
-    long long int a1 = this->numerator_;
-    long long int b2 = frac.getDenominator();
-    long long int a =  a1* b2;
-    long long int a2 = frac.getNumerator();
-    long long int b1 = this->denominator_;
-    long long int b =  a2* b1;
+    // a1/a2 - b1/b2 == (a1*b2)-(b1*a2)/(a2*b2)
+    long int a1 = this->numerator_;
+    long int b2 = frac.getDenominator();
+    long int a =  a1* b2;
+    long int a2 = frac.getNumerator();
+    long int b1 = this->denominator_;
+    long int b =  a2* b1;
     if (((a - b) < INT_MIN) || ((a - b) > INT_MAX))
     {
         throw overflow_error("out the range of int"); // throw an exception
     }
     Fraction new_frac(a - b, this->denominator_ * frac.getDenominator());
-    return new_frac.reduce_fraction();
+    return new_frac;
 }
 
 Fraction Fraction::operator-(float flo) const
@@ -112,10 +117,12 @@ Fraction Fraction::operator-(float flo) const
     return this->operator-(new_frac);
 }
 
+// this func can throw an exception
 Fraction Fraction::operator*(const Fraction &frac) const
 {
-    long long int a = this->numerator_;
-    long long int b =frac.getNumerator();
+    // a1/a2 * b1/b2 = (a1*b1)/(a2*b2)
+    long int a = this->numerator_;
+    long int b =frac.getNumerator();
     if ((a*b) > INT_MAX || ((a*b) < INT_MIN))
     {
         throw overflow_error("out the range of int"); // throw an exception
@@ -135,9 +142,11 @@ Fraction Fraction::operator*(float flo) const
     return this->operator*(new_frac);
 }
 
+// this func can throw an exception
 Fraction Fraction::operator/(const Fraction &frac) const
 {
-    // oposite
+    // a1/a2 / b1/b2 == a1/a2 * b2/b1
+    // oposite frac
     if (frac.getNumerator() == 0)
     {
         throw runtime_error("can't devide by 0"); // throw an exception
@@ -146,6 +155,7 @@ Fraction Fraction::operator/(const Fraction &frac) const
     return this->operator*(new_frac);
 }
 
+// this func can throw an exception
 Fraction Fraction::operator/(float flo) const
 {
     if (flo == 0.0)
@@ -161,7 +171,6 @@ bool Fraction::operator==(const Fraction &frac) const
 {
     int ispos1 = 0;
     int ispos2 = 0;
-    int flag = 0;
     // is the fractions positive
     if ((this->numerator_ >= 0 && this->denominator_ >= 0) || (this->numerator_ <= 0 && this->denominator_ <= 0))
     {
@@ -171,6 +180,7 @@ bool Fraction::operator==(const Fraction &frac) const
     {
         ispos2 = 1;
     }
+    // 0/a == 0/b : true
     if (this->numerator_ == 0 & frac.getNumerator() == 0)
     {
         return true;
@@ -183,9 +193,9 @@ bool Fraction::operator==(const Fraction &frac) const
     // both fractions are negative
     if (ispos1 == 0)
     {
+        //"-" in not in the same level
         if ((this->numerator_ <= 0 && frac.getNumerator() >= 0) || (this->numerator_ >= 0 && frac.getNumerator() <= 0))
         {
-            flag =1;
             if ((this->numerator_ * (-1)) != frac.getNumerator())
             {
                 return false;
@@ -194,14 +204,15 @@ bool Fraction::operator==(const Fraction &frac) const
             {
                 return false;
             }
+            return true;
         }
     }
     // both fractions are positive or "-" in the same level
-    if (this->numerator_ != frac.getNumerator() && flag == 0)
+    if (this->numerator_ != frac.getNumerator())
     {
         return false;
     }
-    if (this->denominator_ != frac.getDenominator() && flag == 0)
+    if (this->denominator_ != frac.getDenominator())
     {
         return false;
     }
@@ -214,9 +225,9 @@ bool Fraction::operator==(float flo) const
     return this->operator==(new_frac);
 }
 
-// a/b > c/d if and only if a*d > b*c
 bool Fraction::operator>(const Fraction &frac) const
 {
+    // a/b > c/d == a*d > b*c
     if ((this->numerator_ * frac.getDenominator()) > (this->denominator_ * frac.getNumerator()))
     {
         return true;
@@ -230,9 +241,9 @@ bool Fraction::operator>(float flo) const
     return this->operator>(new_frac);
 }
 
-// a/b < c/d if and only if a*d < b*c
 bool Fraction::operator<(const Fraction &frac) const
 {
+    // a/b < c/d == a*d < b*c
     if ((this->numerator_ * frac.getDenominator()) < (this->denominator_ * frac.getNumerator()))
     {
         return true;
@@ -311,6 +322,7 @@ ostream &ariel::operator<<(ostream &stream, Fraction const &frac)
     }
 
 }
+// this func can throw an exception
 istream &ariel::operator>>(istream &stream, Fraction &frac)
 {
     char c;
